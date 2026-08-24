@@ -1,0 +1,46 @@
+# Default manifest for my-hub
+
+# This file is bundled into the binary at compile time.
+# Users can override it by creating their own manifest.toml in:
+#     %APPDATA%\my-hub\manifest.toml
+
+# Each [[program]] entry describes one my-family application.
+# Fields:
+#   id          - unique identifier (slug, used in state.json)
+#   name        - display name
+#   owner       - GitHub owner (user or org)
+#   repo        - GitHub repository name
+#   executable  - binary name inside the GitHub release asset
+#   description - short description (optional)
+#   enabled     - whether to check for updates (default true)
+
+# my-hub itself - the launcher app
+[[program]]
+id = "my-hub"
+name = "my-hub"
+owner = "yourusername"
+repo = "my-hub"
+executable = "my-hub.exe"
+description = "Central hub for the my-family suite"
+enabled = true
+
+# Add more my-family programs here as you create them.
+# Each program must have a GitHub repo with Releases for update detection.
+
+# [[program]]
+# id = "my-clipboard"
+# name = "my-clipboard"
+# owner = "yourusername"
+# repo = "my-clipboard"
+# executable = "my-clipboard.exe"
+# description = "Cross-device clipboard sync"
+# enabled = true
+
+# [[program]]
+# id = "my-notes"
+# name = "my-notes"
+# owner = "yourusername"
+# repo = "my-notes"
+# executable = "my-notes.exe"
+# description = "Markdown note-taking app"
+# enabled = true

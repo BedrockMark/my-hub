@@ -1,0 +1,185 @@
+// Update dialog component.
+
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme, UpdateDialogData } from "common.slint";
+
+export component UpdateDialog inherits Dialog {
+    in-out property <UpdateDialogData> data;
+    in property <Theme> theme;
+
+    callback update(string);
+    callback skip-version(string, string);
+    callback ignore-program(string);
+    callback dismissed();
+
+    title: "Update available: " + data.program-name;
+    width: 520px;
+    height: 420px;
+    background: theme.surface;
+
+    VerticalBox {
+        padding: 20px;
+        spacing: 14px;
+
+        HorizontalBox {
+            spacing: 10px;
+            alignment: space-between;
+
+            Text {
+                text: "Update available: " + data.program-name;
+                color: theme.text;
+                font-size: 16px;
+                font-weight: 700;
+                vertical-alignment: center;
+            }
+
+            Text {
+                text: data.published-at;
+                color: theme.text-muted;
+                font-size: 11px;
+                vertical-alignment: center;
+            }
+        }
+
+        HorizontalBox {
+            spacing: 12px;
+            alignment: center;
+
+            Text {
+                text: data.current-version != "" ? data.current-version : "-";
+                color: theme.text-muted;
+                font-size: 22px;
+                font-family: "Consolas";
+                font-weight: 700;
+                vertical-alignment: center;
+            }
+
+            Text {
+                text: "->";
+                color: theme.accent;
+                font-size: 22px;
+                vertical-alignment: center;
+            }
+
+            Text {
+                text: data.latest-version;
+                color: theme.success;
+                font-size: 22px;
+                font-family: "Consolas";
+                font-weight: 700;
+                vertical-alignment: center;
+            }
+        }
+
+        Rectangle {
+            background: theme.background;
+            border-radius: 6px;
+            border-width: 1px;
+            border-color: theme.border;
+            height: 200px;
+
+            notes := Text {
+                x: 12px;
+                y: 12px;
+                width: parent.width - 24px;
+                text: data.release-notes != "" ? data.release-notes : "No release notes.";
+                color: theme.text;
+                font-size: 12px;
+                wrap: word-wrap;
+                vertical-alignment: top;
+            }
+        }
+
+        HorizontalBox {
+            spacing: 8px;
+            alignment: end;
+
+            Rectangle {
+                height: 32px;
+                width: 100px;
+                border-radius: 6px;
+                background: theme.surface-alt;
+                border-width: 1px;
+                border-color: theme.border;
+
+                Text {
+                    text: data.ignored ? "Ignored" : "Ignore";
+                    color: theme.text-muted;
+                    font-size: 12px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => { root.ignore-program(data.program-id); }
+                    enabled: !data.ignored;
+                    mouse-cursor: pointer;
+                }
+            }
+
+            Rectangle {
+                height: 32px;
+                width: 130px;
+                border-radius: 6px;
+                background: theme.surface-alt;
+                border-width: 1px;
+                border-color: theme.border;
+
+                Text {
+                    text: "Skip this version";
+                    color: theme.text-muted;
+                    font-size: 12px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => {
+                        root.skip-version(data.program-id, data.latest-version);
+                    }
+                    mouse-cursor: pointer;
+                }
+            }
+
+            Rectangle {
+                height: 32px;
+                width: 90px;
+                border-radius: 6px;
+                background: theme.accent;
+
+                Text {
+                    text: "Update";
+                    color: white;
+                    font-size: 13px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => { root.update(data.program-id); }
+                    mouse-cursor: pointer;
+                }
+            }
+        }
+
+        Rectangle {
+            height: 24px;
+
+            Text {
+                text: "Close";
+                color: theme.text-muted;
+                font-size: 11px;
+                horizontal-alignment: end;
+                vertical-alignment: center;
+                width: parent.width;
+            }
+            TouchArea {
+                clicked => { root.dismissed(); }
+                mouse-cursor: pointer;
+            }
+        }
+    }
+}

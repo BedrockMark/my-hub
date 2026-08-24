@@ -1,0 +1,56 @@
+// Shared types for my-hub UI.
+
+export struct Theme {
+    background: color,
+    surface: color,
+    surface-alt: color,
+    border: color,
+    text: color,
+    text-muted: color,
+    accent: color,
+    accent-hover: color,
+    success: color,
+    warning: color,
+    danger: color,
+}
+
+export struct ProgramInfo {
+    id: string,
+    name: string,
+    description: string,
+    owner: string,
+    repo: string,
+    current-version: string,
+    latest-version: string,
+    has-update: bool,
+    ignored: bool,
+    enabled: bool,
+    is-self: bool,
+    status-text: string,
+}
+
+export struct UpdateDialogData {
+    program_id: string,
+    program_name: string,
+    current-version: string,
+    latest-version: string,
+    published-at: string,
+    release-notes: string,
+    ignored: bool,
+}
+
+global DefaultTheme {
+    out property <Theme> theme: {
+        background: #1a1a1a,
+        surface: #242424,
+        surface-alt: #2c2c2c,
+        border: #333333,
+        text: #e8e8e8,
+        text-muted: #909090,
+        accent: #4a9eff,
+        accent-hover: #6ab2ff,
+        success: #4ade80,
+        warning: #fbbf24,
+        danger: #ef4444,
+    };
+}

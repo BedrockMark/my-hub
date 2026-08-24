@@ -1,0 +1,281 @@
+// Settings panel component.
+
+import { VerticalBox, HorizontalBox, LineEdit, CheckBox } from "std-widgets.slint";
+import { Theme } from "common.slint";
+
+export component SettingsPanel inherits Dialog {
+    in property <Theme> theme;
+    in-out property <bool> check-on-startup: true;
+    in-out property <bool> start-with-windows: false;
+    in-out property <string> download-dir: "";
+    in-out property <string> github-pat: "";
+    in-out property <string> theme-mode: "Dark";
+    in-out property <string> accent-color: "#4a9eff";
+    in-out property <string> background-color: "#1a1a1a";
+    in-out property <string> text-color: "#e8e8e8";
+
+    callback save-general(bool, bool, string, string);
+    callback save-theme(string, string, string, string);
+    callback dismissed();
+
+    title: "my-hub Settings";
+    min-width: 640px;
+    min-height: 540px;
+    background: theme.background;
+
+    VerticalBox {
+        padding: 20px;
+        spacing: 14px;
+
+        Text {
+            text: "Settings";
+            color: theme.text;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        // General section
+        Text {
+            text: "General";
+            color: theme.text-muted;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        CheckBox {
+            text: "Check for updates on startup";
+            checked: root.check-on-startup;
+            toggled => { root.check-on-startup = self.checked; }
+        }
+
+        CheckBox {
+            text: "Start my-hub with Windows";
+            checked: root.start-with-windows;
+            toggled => { root.start-with-windows = self.checked; }
+        }
+
+        Text {
+            text: "Download directory";
+            color: theme.text-muted;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        LineEdit {
+            text: root.download-dir;
+            placeholder-text: "%LOCALAPPDATA%\\my-hub\\downloads";
+            edited(s) => { root.download-dir = s; }
+            height: 32px;
+        }
+
+        Text {
+            text: "GitHub PAT (optional)";
+            color: theme.text-muted;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        LineEdit {
+            text: root.github-pat;
+            placeholder-text: "ghp_...";
+            edited(s) => { root.github-pat = s; }
+            height: 32px;
+        }
+
+        // Theme section
+        Text {
+            text: "Theme";
+            color: theme.text-muted;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        HorizontalBox {
+            spacing: 8px;
+
+            Rectangle {
+                height: 28px;
+                width: 70px;
+                border-radius: 4px;
+                background: root.theme-mode == "Dark" ? theme.accent : theme.surface;
+                border-width: 1px;
+                border-color: theme.border;
+
+                Text {
+                    text: "Dark";
+                    color: root.theme-mode == "Dark" ? white : theme.text;
+                    font-size: 12px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => { root.theme-mode = "Dark"; }
+                    mouse-cursor: pointer;
+                }
+            }
+
+            Rectangle {
+                height: 28px;
+                width: 70px;
+                border-radius: 4px;
+                background: root.theme-mode == "Light" ? theme.accent : theme.surface;
+                border-width: 1px;
+                border-color: theme.border;
+
+                Text {
+                    text: "Light";
+                    color: root.theme-mode == "Light" ? white : theme.text;
+                    font-size: 12px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => { root.theme-mode = "Light"; }
+                    mouse-cursor: pointer;
+                }
+            }
+
+            Rectangle {
+                height: 28px;
+                width: 80px;
+                border-radius: 4px;
+                background: root.theme-mode == "System" ? theme.accent : theme.surface;
+                border-width: 1px;
+                border-color: theme.border;
+
+                Text {
+                    text: "System";
+                    color: root.theme-mode == "System" ? white : theme.text;
+                    font-size: 12px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => { root.theme-mode = "System"; }
+                    mouse-cursor: pointer;
+                }
+            }
+        }
+
+        HorizontalBox {
+            spacing: 8px;
+
+            VerticalBox {
+                spacing: 4px;
+                Text {
+                    text: "Accent";
+                    color: theme.text-muted;
+                    font-size: 10px;
+                }
+                LineEdit {
+                    text: root.accent-color;
+                    placeholder-text: "#4a9eff";
+                    edited(s) => { root.accent-color = s; }
+                    width: 130px;
+                    height: 28px;
+                }
+            }
+
+            VerticalBox {
+                spacing: 4px;
+                Text {
+                    text: "Background";
+                    color: theme.text-muted;
+                    font-size: 10px;
+                }
+                LineEdit {
+                    text: root.background-color;
+                    placeholder-text: "#1a1a1a";
+                    edited(s) => { root.background-color = s; }
+                    width: 130px;
+                    height: 28px;
+                }
+            }
+
+            VerticalBox {
+                spacing: 4px;
+                Text {
+                    text: "Text";
+                    color: theme.text-muted;
+                    font-size: 10px;
+                }
+                LineEdit {
+                    text: root.text-color;
+                    placeholder-text: "#e8e8e8";
+                    edited(s) => { root.text-color = s; }
+                    width: 130px;
+                    height: 28px;
+                }
+            }
+        }
+
+        // Buttons
+        HorizontalBox {
+            spacing: 8px;
+            alignment: end;
+
+            Rectangle {
+                height: 32px;
+                width: 90px;
+                border-radius: 6px;
+                background: theme.surface;
+                border-width: 1px;
+                border-color: theme.border;
+
+                Text {
+                    text: "Close";
+                    color: theme.text;
+                    font-size: 12px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => { root.dismissed(); }
+                    mouse-cursor: pointer;
+                }
+            }
+
+            Rectangle {
+                height: 32px;
+                width: 90px;
+                border-radius: 6px;
+                background: theme.accent;
+
+                Text {
+                    text: "Save";
+                    color: white;
+                    font-size: 12px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                }
+                TouchArea {
+                    clicked => {
+                        root.save-general(
+                            root.check-on-startup,
+                            root.start-with-windows,
+                            root.download-dir,
+                            root.github-pat
+                        );
+                        root.save-theme(
+                            root.theme-mode,
+                            root.accent-color,
+                            root.background-color,
+                            root.text-color
+                        );
+                    }
+                    mouse-cursor: pointer;
+                }
+            }
+        }
+    }
+}
