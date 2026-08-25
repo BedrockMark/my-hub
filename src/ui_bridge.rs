@@ -275,29 +275,34 @@ pub fn run(state: AppState) -> Result<()> {
         });
     });
 
-    let state_for_open = Arc::clone(&state);
-    ui.on_open_program(move |id| {
-        info!("Open program {}", id);
-        let s = state_for_open.lock().unwrap();
+    let state_for_launch = Arc::clone(&state);
+    ui.on_launch_program(move |id| {
+        info!("Launch program {}", id);
+        let s = state_for_launch.lock().unwrap();
         if let Some(program) = s.manifest.find(id.as_str()) {
-            let exe = program.executable.clone();
-            // 先按名字启动（假设在 PATH），失败则尝试当前 exe 同目录
-            let spawned = std::process::Command::new(&exe).spawn().or_else(|_| {
-                let dir = std::env::current_exe()
-                    .ok()
-                    .and_then(|p| p.parent().map(|d| d.to_path_buf()));
-                match dir {
-                    Some(d) => std::process::Command::new(d.join(&exe)).spawn(),
-                    None => Err(std::io::Error::new(
-                        std::io::ErrorKind::NotFound,
-                        "executable not found",
-                    )),
+            launch_program(program);
+        }
+    });
+
+    let state_for_uninstall = Arc::clone(&state);
+    let ui_for_uninstall = ui.as_weak();
+    ui.on_uninstall_program(move |id| {
+        info!("Uninstall program {}", id);
+        {
+            let mut s = state_for_uninstall.lock().unwrap();
+            if s.update_state.installed_versions.remove(id.as_str()).is_some() {
+                if let Err(e) = s.save() {
+                    warn!("Failed to persist state after uninstall: {:#}", e);
                 }
-            });
-            if let Err(e) = spawned {
-                warn!("Failed to launch {}: {}", exe, e);
+            } else {
+                warn!("No installed record for {} - nothing to uninstall", id);
             }
         }
+        let value = state_for_uninstall.clone();
+        let _ = ui_for_uninstall.upgrade_in_event_loop(move |ui| {
+            let st = value.lock().unwrap();
+            refresh_program_list(&ui, &st, None);
+        });
     });
 
     let ui_for_close_dialog = ui.as_weak();
@@ -482,6 +487,27 @@ fn refresh_program_list(
         })
         .collect();
     ui.set_programs(Rc::new(VecModel::from(rows)).into());
+}
+
+/// Launch a program by its manifest executable: first by name (assuming it is
+/// on PATH), then falling back to the directory of the running my-hub exe.
+fn launch_program(entry: &crate::config::manifest::ProgramEntry) {
+    let exe = entry.executable.clone();
+    let spawned = std::process::Command::new(&exe).spawn().or_else(|_| {
+        let dir = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.to_path_buf()));
+        match dir {
+            Some(d) => std::process::Command::new(d.join(&exe)).spawn(),
+            None => Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "executable not found",
+            )),
+        }
+    });
+    if let Err(e) = spawned {
+        warn!("Failed to launch {}: {}", exe, e);
+    }
 }
 
 fn dark_mode(theme_mode: &str) -> bool {
