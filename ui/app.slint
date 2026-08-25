@@ -1,6 +1,6 @@
 // my-hub 主窗口 - 顶层 UI。
 
-import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 import { Theme, ProgramInfo, UpdateDialogData, ThemedButton } from "common.slint";
 import { UpdateDialog } from "update_dialog.slint";
 import { SettingsPanel } from "settings.slint";
@@ -9,16 +9,16 @@ export { Theme, ProgramInfo, UpdateDialogData }
 export { UpdateDialog }
 export { SettingsPanel }
 
-// 程序列表行组件
+// 程序列表行组件（固定行高，列表区由 ScrollView 负责滚动）
 component ProgramRowItem inherits Rectangle {
     in property <ProgramInfo> program;
     in property <Theme> theme;
 
-    callback open-program(string);
     callback request-update(string);
+    callback launch-program(string);
+    callback uninstall-program(string);
 
-    min-height: 52px;
-    preferred-height: 56px;
+    height: 56px;
     border-radius: 6px;
     background: theme.surface;
     border-width: 1px;
@@ -137,6 +137,18 @@ component ProgramRowItem inherits Rectangle {
                 }
             }
 
+            // 卸载按钮：仅在本地已安装时显示，位于 Update 按钮之前
+            if program.current-version != "": ThemedButton {
+                theme: root.theme;
+                text: "Uninstall";
+                bg: theme.surface-alt;
+                hover-bg: theme.surface;
+                preferred-width: 88px;
+                min-width: 80px;
+                clicked => { root.uninstall-program(program.id); }
+            }
+
+            // 更新/最新状态按钮：有更新时可点击，无更新则灰度显示 Latest
             ThemedButton {
                 theme: root.theme;
                 text: program.has-update ? "Update" : program.ignored ? "Ignored" : "Latest";
@@ -144,16 +156,24 @@ component ProgramRowItem inherits Rectangle {
                 bg: program.has-update ? theme.accent : theme.surface-alt;
                 hover-bg: program.has-update ? theme.accent-hover : theme.surface;
                 text-color: program.has-update ? white : theme.text-muted;
-                enabled: !program.ignored;
+                enabled: program.has-update && !program.ignored;
                 preferred-width: 90px;
                 min-width: 84px;
-                clicked => {
-                    if program.has-update {
-                        root.request-update(program.id);
-                    } else {
-                        root.open-program(program.id);
-                    }
-                }
+                clicked => { root.request-update(program.id); }
+            }
+
+            // 启动按钮：蓝色，仅本地已安装时可启动
+            ThemedButton {
+                theme: root.theme;
+                text: "Launch";
+                bold: true;
+                bg: theme.accent;
+                hover-bg: theme.accent-hover;
+                text-color: white;
+                enabled: program.current-version != "";
+                preferred-width: 80px;
+                min-width: 76px;
+                clicked => { root.launch-program(program.id); }
             }
         }
     }
@@ -196,7 +216,8 @@ export component MainWindow inherits Window {
     callback request-update(string);
     callback skip-version(string, string);
     callback ignore-program(string);
-    callback open-program(string);
+    callback launch-program(string);
+    callback uninstall-program(string);
     callback close-dialog();
 
     title: "my-hub - Manage your my-family programs";
@@ -262,7 +283,7 @@ export component MainWindow inherits Window {
             }
         }
 
-        // 程序列表：stretch 占据剩余垂直空间，随窗口自适应
+        // 程序列表：stretch 占据剩余垂直空间，内容超高时由 ScrollView 滚动
         Rectangle {
             vertical-stretch: 1;
             preferred-height: 120px;
@@ -272,23 +293,29 @@ export component MainWindow inherits Window {
             border-width: 1px;
             border-color: theme.border;
 
-            VerticalLayout {
-                padding: 8px;
-                spacing: 6px;
+            ScrollView {
+                background: transparent;
+                border-radius: 8px;
 
-                for p in root.programs: ProgramRowItem {
-                    program: p;
-                    theme: root.theme;
-                    open-program(id) => { root.open-program(id); }
-                    request-update(id) => { root.request-update(id); }
-                }
+                VerticalLayout {
+                    padding: 8px;
+                    spacing: 6px;
 
-                if root.programs.length == 0: Text {
-                    text: "No programs yet. Edit assets/default-manifest.toml to add my-family programs.";
-                    color: theme.text-muted;
-                    font-size: 13px;
-                    horizontal-alignment: center;
-                    preferred-height: 60px;
+                    for p in root.programs: ProgramRowItem {
+                        program: p;
+                        theme: root.theme;
+                        request-update(id) => { root.request-update(id); }
+                        launch-program(id) => { root.launch-program(id); }
+                        uninstall-program(id) => { root.uninstall-program(id); }
+                    }
+
+                    if root.programs.length == 0: Text {
+                        text: "No programs yet. Edit assets/default-manifest.toml to add my-family programs.";
+                        color: theme.text-muted;
+                        font-size: 13px;
+                        horizontal-alignment: center;
+                        preferred-height: 60px;
+                    }
                 }
             }
         }
