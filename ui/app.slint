@@ -1,7 +1,7 @@
-// my-hub main window - top-level UI.
+// my-hub 主窗口 - 顶层 UI。
 
-import { VerticalBox, HorizontalBox, LineEdit } from "std-widgets.slint";
-import { Theme, ProgramInfo, UpdateDialogData } from "common.slint";
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme, ProgramInfo, UpdateDialogData, ThemedButton } from "common.slint";
 import { UpdateDialog } from "update_dialog.slint";
 import { SettingsPanel } from "settings.slint";
 
@@ -9,7 +9,7 @@ export { Theme, ProgramInfo, UpdateDialogData }
 export { UpdateDialog }
 export { SettingsPanel }
 
-// Row component for the program list
+// 程序列表行组件
 component ProgramRowItem inherits Rectangle {
     in property <ProgramInfo> program;
     in property <Theme> theme;
@@ -17,7 +17,8 @@ component ProgramRowItem inherits Rectangle {
     callback open-program(string);
     callback request-update(string);
 
-    height: 56px;
+    min-height: 52px;
+    preferred-height: 56px;
     border-radius: 6px;
     background: theme.surface;
     border-width: 1px;
@@ -29,15 +30,18 @@ component ProgramRowItem inherits Rectangle {
         padding-top: 10px;
         padding-bottom: 10px;
         spacing: 12px;
-        alignment: space-between;
 
+        // 左侧：状态条 + 名称/描述（占据剩余宽度，窄窗口时文本省略）
         HorizontalBox {
+            horizontal-stretch: 1;
+            preferred-width: 0px;
             spacing: 10px;
             alignment: start;
 
             Rectangle {
-                width: 4px;
-                height: 32px;
+                preferred-width: 4px;
+                min-width: 4px;
+                preferred-height: 32px;
                 border-radius: 2px;
                 background: program.has-update ? theme.warning : theme.success;
             }
@@ -53,12 +57,14 @@ component ProgramRowItem inherits Rectangle {
                         color: theme.text;
                         font-size: 13px;
                         font-weight: 700;
+                        overflow: elide;
                         vertical-alignment: center;
                     }
 
                     if program.is-self: Rectangle {
-                        height: 18px;
-                        width: 50px;
+                        preferred-width: 50px;
+                        min-width: 44px;
+                        preferred-height: 18px;
                         border-radius: 9px;
                         background: theme.accent;
                         Text {
@@ -77,10 +83,12 @@ component ProgramRowItem inherits Rectangle {
                     text: program.owner + "/" + program.repo + "  -  " + program.description;
                     color: theme.text-muted;
                     font-size: 11px;
+                    overflow: elide;
                 }
             }
         }
 
+        // 右侧：版本信息 + 操作按钮
         HorizontalBox {
             spacing: 14px;
             alignment: end;
@@ -102,6 +110,7 @@ component ProgramRowItem inherits Rectangle {
                     font-size: 13px;
                     font-family: "Consolas";
                     font-weight: 600;
+                    overflow: elide;
                     horizontal-alignment: right;
                 }
             }
@@ -123,37 +132,27 @@ component ProgramRowItem inherits Rectangle {
                     font-size: 13px;
                     font-family: "Consolas";
                     font-weight: 600;
+                    overflow: elide;
                     horizontal-alignment: right;
                 }
             }
 
-            Rectangle {
-                width: 90px;
-                height: 32px;
-                border-radius: 6px;
-                background: program.has-update ? theme.accent : theme.surface-alt;
-                border-width: 1px;
-                border-color: theme.border;
-
-                Text {
-                    text: program.has-update ? "Update" : program.ignored ? "Ignored" : "Latest";
-                    color: program.has-update ? white : theme.text-muted;
-                    font-size: 12px;
-                    font-weight: 700;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => {
-                        if program.has-update {
-                            root.request-update(program.id);
-                        } else {
-                            root.open-program(program.id);
-                        }
+            ThemedButton {
+                theme: root.theme;
+                text: program.has-update ? "Update" : program.ignored ? "Ignored" : "Latest";
+                bold: true;
+                bg: program.has-update ? theme.accent : theme.surface-alt;
+                hover-bg: program.has-update ? theme.accent-hover : theme.surface;
+                text-color: program.has-update ? white : theme.text-muted;
+                enabled: !program.ignored;
+                preferred-width: 90px;
+                min-width: 84px;
+                clicked => {
+                    if program.has-update {
+                        root.request-update(program.id);
+                    } else {
+                        root.open-program(program.id);
                     }
-                    enabled: !program.ignored;
-                    mouse-cursor: pointer;
                 }
             }
         }
@@ -201,8 +200,10 @@ export component MainWindow inherits Window {
     callback close-dialog();
 
     title: "my-hub - Manage your my-family programs";
-    width: 980px;
-    height: 640px;
+    preferred-width: 980px;
+    preferred-height: 640px;
+    min-width: 780px;
+    min-height: 480px;
     background: theme.background;
     default-font-family: "Segoe UI";
 
@@ -210,7 +211,7 @@ export component MainWindow inherits Window {
         padding: 16px;
         spacing: 12px;
 
-        // Header
+        // 头部
         HorizontalBox {
             spacing: 12px;
             alignment: space-between;
@@ -231,6 +232,7 @@ export component MainWindow inherits Window {
                     text: "Manage your my-family programs";
                     color: theme.text-muted;
                     font-size: 12px;
+                    overflow: elide;
                     vertical-alignment: center;
                 }
             }
@@ -239,64 +241,39 @@ export component MainWindow inherits Window {
                 spacing: 8px;
                 alignment: end;
 
-                Rectangle {
-                    width: 90px;
-                    height: 32px;
-                    border-radius: 6px;
-                    background: theme.surface;
-                    border-width: 1px;
-                    border-color: theme.border;
-
-                    Text {
-                        text: "Settings";
-                        color: theme.text;
-                        font-size: 12px;
-                        font-weight: 600;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
-                        width: parent.width;
-                    }
-                    TouchArea {
-                        clicked => { root.open-settings(); }
-                        mouse-cursor: pointer;
-                    }
+                ThemedButton {
+                    theme: root.theme;
+                    text: "Settings";
+                    preferred-width: 90px;
+                    clicked => { root.open-settings(); }
                 }
 
-                Rectangle {
-                    width: 110px;
-                    height: 32px;
-                    border-radius: 6px;
-                    background: theme.accent;
-
-                    Text {
-                        text: root.is-checking ? "Checking..." : "Check now";
-                        color: white;
-                        font-size: 12px;
-                        font-weight: 700;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
-                        width: parent.width;
-                    }
-                    TouchArea {
-                        clicked => { root.check-now(); }
-                        enabled: !root.is-checking;
-                        mouse-cursor: pointer;
-                    }
+                ThemedButton {
+                    theme: root.theme;
+                    text: root.is-checking ? "Checking..." : "Check now";
+                    bold: true;
+                    bg: theme.accent;
+                    hover-bg: theme.accent-hover;
+                    text-color: white;
+                    enabled: !root.is-checking;
+                    preferred-width: 110px;
+                    clicked => { root.check-now(); }
                 }
             }
         }
 
-        // Program list
+        // 程序列表：stretch 占据剩余垂直空间，随窗口自适应
         Rectangle {
+            vertical-stretch: 1;
+            preferred-height: 120px;
+            min-height: 80px;
             background: theme.surface-alt;
             border-radius: 8px;
             border-width: 1px;
             border-color: theme.border;
-            height: parent.height - 130px;
 
             VerticalLayout {
-                x: 8px;
-                y: 8px;
+                padding: 8px;
                 spacing: 6px;
 
                 for p in root.programs: ProgramRowItem {
@@ -311,13 +288,12 @@ export component MainWindow inherits Window {
                     color: theme.text-muted;
                     font-size: 13px;
                     horizontal-alignment: center;
-                    width: parent.width;
-                    height: 60px;
+                    preferred-height: 60px;
                 }
             }
         }
 
-        // Status bar
+        // 状态栏
         HorizontalBox {
             spacing: 12px;
             alignment: space-between;
@@ -338,7 +314,7 @@ export component MainWindow inherits Window {
         }
     }
 
-    // --- Settings dialog (modal popup) ---
+    // --- 设置弹窗 ---
     if root.settings-visible: SettingsPanel {
         theme: root.theme;
         check-on-startup <=> root.check-on-startup;
@@ -354,7 +330,7 @@ export component MainWindow inherits Window {
         dismissed => { root.close-settings(); }
     }
 
-    // --- Update dialog (modal popup) ---
+    // --- 更新弹窗 ---
     if dialog-data.program-id != "": UpdateDialog {
         data: root.dialog-data;
         theme: root.theme;

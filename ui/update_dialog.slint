@@ -1,7 +1,7 @@
-// Update dialog component.
+// 更新对话框组件。
 
 import { VerticalBox, HorizontalBox } from "std-widgets.slint";
-import { Theme, UpdateDialogData } from "common.slint";
+import { Theme, UpdateDialogData, ThemedButton } from "common.slint";
 
 export component UpdateDialog inherits Dialog {
     in-out property <UpdateDialogData> data;
@@ -13,14 +13,15 @@ export component UpdateDialog inherits Dialog {
     callback dismissed();
 
     title: "Update available: " + data.program-name;
-    width: 520px;
-    height: 420px;
-    background: theme.surface;
+    min-width: 480px;
+    min-height: 380px;
+    background: theme.background;
 
     VerticalBox {
         padding: 20px;
         spacing: 14px;
 
+        // 标题 + 发布日期
         HorizontalBox {
             spacing: 10px;
             alignment: space-between;
@@ -30,6 +31,7 @@ export component UpdateDialog inherits Dialog {
                 color: theme.text;
                 font-size: 16px;
                 font-weight: 700;
+                overflow: elide;
                 vertical-alignment: center;
             }
 
@@ -41,6 +43,7 @@ export component UpdateDialog inherits Dialog {
             }
         }
 
+        // 版本号对比
         HorizontalBox {
             spacing: 12px;
             alignment: center;
@@ -71,102 +74,72 @@ export component UpdateDialog inherits Dialog {
             }
         }
 
+        // 发布说明：宽度/高度均受约束，随弹窗尺寸自适应
         Rectangle {
-            background: theme.background;
+            preferred-width: 480px;
+            min-width: 380px;
+            max-width: 560px;
+            preferred-height: 200px;
+            min-height: 120px;
+            max-height: 320px;
+            background: theme.surface;
             border-radius: 6px;
             border-width: 1px;
             border-color: theme.border;
-            height: 200px;
 
-            notes := Text {
-                x: 12px;
-                y: 12px;
-                width: parent.width - 24px;
-                text: data.release-notes != "" ? data.release-notes : "No release notes.";
-                color: theme.text;
-                font-size: 12px;
-                wrap: word-wrap;
-                vertical-alignment: top;
+            VerticalLayout {
+                padding: 12px;
+
+                Text {
+                    text: data.release-notes != "" ? data.release-notes : "No release notes.";
+                    color: theme.text;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                    vertical-alignment: top;
+                }
             }
         }
 
+        // 操作按钮
         HorizontalBox {
             spacing: 8px;
             alignment: end;
 
-            Rectangle {
-                height: 32px;
-                width: 100px;
-                border-radius: 6px;
-                background: theme.surface-alt;
-                border-width: 1px;
-                border-color: theme.border;
+            ThemedButton {
+                theme: root.theme;
+                text: data.ignored ? "Ignored" : "Ignore";
+                bg: theme.surface-alt;
+                enabled: !data.ignored;
+                preferred-width: 90px;
+                clicked => { root.ignore-program(data.program-id); }
+            }
 
-                Text {
-                    text: data.ignored ? "Ignored" : "Ignore";
-                    color: theme.text-muted;
-                    font-size: 12px;
-                    font-weight: 600;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => { root.ignore-program(data.program-id); }
-                    enabled: !data.ignored;
-                    mouse-cursor: pointer;
+            ThemedButton {
+                theme: root.theme;
+                text: "Skip this version";
+                bg: theme.surface-alt;
+                preferred-width: 130px;
+                clicked => {
+                    root.skip-version(data.program-id, data.latest-version);
                 }
             }
 
-            Rectangle {
-                height: 32px;
-                width: 130px;
-                border-radius: 6px;
-                background: theme.surface-alt;
-                border-width: 1px;
-                border-color: theme.border;
-
-                Text {
-                    text: "Skip this version";
-                    color: theme.text-muted;
-                    font-size: 12px;
-                    font-weight: 600;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => {
-                        root.skip-version(data.program-id, data.latest-version);
-                    }
-                    mouse-cursor: pointer;
-                }
-            }
-
-            Rectangle {
-                height: 32px;
-                width: 90px;
-                border-radius: 6px;
-                background: theme.accent;
-
-                Text {
-                    text: "Update";
-                    color: white;
-                    font-size: 13px;
-                    font-weight: 700;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => { root.update(data.program-id); }
-                    mouse-cursor: pointer;
-                }
+            ThemedButton {
+                theme: root.theme;
+                text: "Update";
+                bold: true;
+                bg: theme.accent;
+                hover-bg: theme.accent-hover;
+                text-color: white;
+                preferred-width: 90px;
+                clicked => { root.update(data.program-id); }
             }
         }
 
+        // 关闭链接
         Rectangle {
-            height: 24px;
+            preferred-height: 24px;
+            min-height: 24px;
 
             Text {
                 text: "Close";

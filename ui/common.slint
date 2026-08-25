@@ -1,4 +1,6 @@
-// Shared types for my-hub UI.
+// 共享类型与可复用组件：my-hub UI 的基础库。
+
+import { VerticalBox, HorizontalBox, LineEdit } from "std-widgets.slint";
 
 export struct Theme {
     background: color,
@@ -53,4 +55,142 @@ global DefaultTheme {
         warning: #fbbf24,
         danger: #ef4444,
     };
+}
+
+// ---- 通用组件 ----
+
+// 主题化按钮：支持悬停/禁用状态，尺寸完全由外部布局约束决定。
+export component ThemedButton inherits Rectangle {
+    in property <Theme> theme;
+    in property <string> text: "";
+    in property <brush> bg: theme.surface;
+    in property <brush> hover-bg: theme.surface-alt;
+    in property <color> text-color: theme.text;
+    in property <bool> enabled: true;
+    in property <bool> bold: false;
+    in property <length> font-size: 12px;
+    callback clicked;
+
+    preferred-width: 96px;
+    preferred-height: 32px;
+    min-height: 28px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: theme.border;
+    background: !root.enabled ? theme.surface : (touch.has-hover ? root.hover-bg : root.bg);
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+
+    Text {
+        text: root.text;
+        color: !root.enabled ? theme.text-muted : root.text-color;
+        font-size: root.font-size;
+        font-weight: root.bold ? 700 : 600;
+        overflow: elide;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        width: parent.width;
+    }
+}
+
+// 分段选择按钮（一组中的一个），用于 Dark/Light/System 之类的小型选项。
+export component SegmentedButton inherits Rectangle {
+    in property <Theme> theme;
+    in property <string> text: "";
+    in property <bool> selected: false;
+    callback clicked;
+
+    preferred-width: 70px;
+    preferred-height: 28px;
+    min-height: 28px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: theme.border;
+    background: root.selected ? theme.accent : (touch.has-hover ? theme.surface-alt : theme.surface);
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+
+    Text {
+        text: root.text;
+        color: root.selected ? white : theme.text;
+        font-size: 12px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        width: parent.width;
+    }
+}
+
+// 主题模式选择器：Dark / Light / System 三选一。
+export component ThemeModeSelector {
+    in property <Theme> theme;
+    in-out property <string> mode: "Dark";
+
+    HorizontalBox {
+        spacing: 8px;
+
+        SegmentedButton {
+            theme: root.theme;
+            text: "Dark";
+            selected: root.mode == "Dark";
+            clicked => { root.mode = "Dark"; }
+        }
+        SegmentedButton {
+            theme: root.theme;
+            text: "Light";
+            selected: root.mode == "Light";
+            clicked => { root.mode = "Light"; }
+        }
+        SegmentedButton {
+            theme: root.theme;
+            text: "System";
+            preferred-width: 80px;
+            selected: root.mode == "System";
+            clicked => { root.mode = "System"; }
+        }
+    }
+}
+
+// 带标签的颜色输入框（Accent / Background / Text 共用）。
+export component ColorField {
+    in property <Theme> theme;
+    in property <string> label: "";
+    in property <string> placeholder: "";
+    in-out property <string> value: "";
+
+    VerticalBox {
+        spacing: 4px;
+
+        Text {
+            text: root.label;
+            color: theme.text-muted;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        LineEdit {
+            text <=> root.value;
+            placeholder-text: root.placeholder;
+            preferred-width: 130px;
+            preferred-height: 28px;
+        }
+    }
+}
+
+// 设置面板的小节标题。
+export component SectionHeader inherits Text {
+    in property <Theme> theme;
+    in property <string> section-title: "";
+
+    text: root.section-title;
+    color: theme.text-muted;
+    font-size: 11px;
+    font-weight: 600;
 }

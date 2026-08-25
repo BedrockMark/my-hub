@@ -1,7 +1,7 @@
-// Settings panel component.
+// 设置面板组件。
 
 import { VerticalBox, HorizontalBox, LineEdit, CheckBox } from "std-widgets.slint";
-import { Theme } from "common.slint";
+import { Theme, SectionHeader, ThemeModeSelector, ColorField, ThemedButton } from "common.slint";
 
 export component SettingsPanel inherits Dialog {
     in property <Theme> theme;
@@ -34,13 +34,8 @@ export component SettingsPanel inherits Dialog {
             font-weight: 700;
         }
 
-        // General section
-        Text {
-            text: "General";
-            color: theme.text-muted;
-            font-size: 11px;
-            font-weight: 600;
-        }
+        // General 小节
+        SectionHeader { theme: root.theme; section-title: "General"; }
 
         CheckBox {
             text: "Check for updates on startup";
@@ -54,226 +49,90 @@ export component SettingsPanel inherits Dialog {
             toggled => { root.start-with-windows = self.checked; }
         }
 
-        Text {
-            text: "Download directory";
-            color: theme.text-muted;
-            font-size: 11px;
-            font-weight: 600;
-        }
+        SectionHeader { theme: root.theme; section-title: "Download directory"; }
 
         LineEdit {
             text: root.download-dir;
             placeholder-text: "%LOCALAPPDATA%\\my-hub\\downloads";
             edited(s) => { root.download-dir = s; }
-            height: 32px;
+            preferred-height: 32px;
         }
 
-        Text {
-            text: "GitHub PAT (optional)";
-            color: theme.text-muted;
-            font-size: 11px;
-            font-weight: 600;
-        }
+        SectionHeader { theme: root.theme; section-title: "GitHub PAT (optional)"; }
 
         LineEdit {
             text: root.github-pat;
             placeholder-text: "ghp_...";
             edited(s) => { root.github-pat = s; }
-            height: 32px;
+            preferred-height: 32px;
         }
 
-        // Theme section
-        Text {
-            text: "Theme";
-            color: theme.text-muted;
-            font-size: 11px;
-            font-weight: 600;
-        }
+        // Theme 小节
+        SectionHeader { theme: root.theme; section-title: "Theme"; }
 
-        HorizontalBox {
-            spacing: 8px;
-
-            Rectangle {
-                height: 28px;
-                width: 70px;
-                border-radius: 4px;
-                background: root.theme-mode == "Dark" ? theme.accent : theme.surface;
-                border-width: 1px;
-                border-color: theme.border;
-
-                Text {
-                    text: "Dark";
-                    color: root.theme-mode == "Dark" ? white : theme.text;
-                    font-size: 12px;
-                    font-weight: 600;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => { root.theme-mode = "Dark"; }
-                    mouse-cursor: pointer;
-                }
-            }
-
-            Rectangle {
-                height: 28px;
-                width: 70px;
-                border-radius: 4px;
-                background: root.theme-mode == "Light" ? theme.accent : theme.surface;
-                border-width: 1px;
-                border-color: theme.border;
-
-                Text {
-                    text: "Light";
-                    color: root.theme-mode == "Light" ? white : theme.text;
-                    font-size: 12px;
-                    font-weight: 600;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => { root.theme-mode = "Light"; }
-                    mouse-cursor: pointer;
-                }
-            }
-
-            Rectangle {
-                height: 28px;
-                width: 80px;
-                border-radius: 4px;
-                background: root.theme-mode == "System" ? theme.accent : theme.surface;
-                border-width: 1px;
-                border-color: theme.border;
-
-                Text {
-                    text: "System";
-                    color: root.theme-mode == "System" ? white : theme.text;
-                    font-size: 12px;
-                    font-weight: 600;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => { root.theme-mode = "System"; }
-                    mouse-cursor: pointer;
-                }
-            }
+        ThemeModeSelector {
+            theme: root.theme;
+            mode <=> root.theme-mode;
         }
 
         HorizontalBox {
             spacing: 8px;
 
-            VerticalBox {
-                spacing: 4px;
-                Text {
-                    text: "Accent";
-                    color: theme.text-muted;
-                    font-size: 10px;
-                }
-                LineEdit {
-                    text: root.accent-color;
-                    placeholder-text: "#4a9eff";
-                    edited(s) => { root.accent-color = s; }
-                    width: 130px;
-                    height: 28px;
-                }
+            ColorField {
+                theme: root.theme;
+                label: "Accent";
+                placeholder: "#4a9eff";
+                value <=> root.accent-color;
             }
 
-            VerticalBox {
-                spacing: 4px;
-                Text {
-                    text: "Background";
-                    color: theme.text-muted;
-                    font-size: 10px;
-                }
-                LineEdit {
-                    text: root.background-color;
-                    placeholder-text: "#1a1a1a";
-                    edited(s) => { root.background-color = s; }
-                    width: 130px;
-                    height: 28px;
-                }
+            ColorField {
+                theme: root.theme;
+                label: "Background";
+                placeholder: "#1a1a1a";
+                value <=> root.background-color;
             }
 
-            VerticalBox {
-                spacing: 4px;
-                Text {
-                    text: "Text";
-                    color: theme.text-muted;
-                    font-size: 10px;
-                }
-                LineEdit {
-                    text: root.text-color;
-                    placeholder-text: "#e8e8e8";
-                    edited(s) => { root.text-color = s; }
-                    width: 130px;
-                    height: 28px;
-                }
+            ColorField {
+                theme: root.theme;
+                label: "Text";
+                placeholder: "#e8e8e8";
+                value <=> root.text-color;
             }
         }
 
-        // Buttons
+        // 底部按钮
         HorizontalBox {
             spacing: 8px;
             alignment: end;
 
-            Rectangle {
-                height: 32px;
-                width: 90px;
-                border-radius: 6px;
-                background: theme.surface;
-                border-width: 1px;
-                border-color: theme.border;
-
-                Text {
-                    text: "Close";
-                    color: theme.text;
-                    font-size: 12px;
-                    font-weight: 600;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => { root.dismissed(); }
-                    mouse-cursor: pointer;
-                }
+            ThemedButton {
+                theme: root.theme;
+                text: "Close";
+                preferred-width: 90px;
+                clicked => { root.dismissed(); }
             }
 
-            Rectangle {
-                height: 32px;
-                width: 90px;
-                border-radius: 6px;
-                background: theme.accent;
-
-                Text {
-                    text: "Save";
-                    color: white;
-                    font-size: 12px;
-                    font-weight: 700;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                }
-                TouchArea {
-                    clicked => {
-                        root.save-general(
-                            root.check-on-startup,
-                            root.start-with-windows,
-                            root.download-dir,
-                            root.github-pat
-                        );
-                        root.save-theme(
-                            root.theme-mode,
-                            root.accent-color,
-                            root.background-color,
-                            root.text-color
-                        );
-                    }
-                    mouse-cursor: pointer;
+            ThemedButton {
+                theme: root.theme;
+                text: "Save";
+                bold: true;
+                bg: theme.accent;
+                hover-bg: theme.accent-hover;
+                text-color: white;
+                preferred-width: 90px;
+                clicked => {
+                    root.save-general(
+                        root.check-on-startup,
+                        root.start-with-windows,
+                        root.download-dir,
+                        root.github-pat
+                    );
+                    root.save-theme(
+                        root.theme-mode,
+                        root.accent-color,
+                        root.background-color,
+                        root.text-color
+                    );
                 }
             }
         }
