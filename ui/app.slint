@@ -139,40 +139,61 @@ component ProgramRowItem inherits Rectangle {
                 }
             }
 
-            // 卸载按钮：仅在本地已安装时显示，位于 Update 按钮之前
-            if program.current-version != "": ThemedButton {
+            // ---- 按钮区 ----
+            // 未安装：只显示 Install 按钮
+            if program.current-version == "": ThemedButton {
                 theme: root.theme;
-                text: "Uninstall";
-                bg: theme.surface-alt;
-                hover-bg: theme.surface;
-                preferred-width: 88px;
-                min-width: 80px;
-                clicked => { root.uninstall-program(program.id); }
-            }
-
-            // 更新/最新状态按钮：有更新时可点击，无更新则灰度显示 Latest
-            ThemedButton {
-                theme: root.theme;
-                text: program.has-update ? "Update" : program.ignored ? "Ignored" : "Latest";
+                text: "Install";
                 bold: true;
-                bg: program.has-update ? theme.accent : theme.surface-alt;
-                hover-bg: program.has-update ? theme.accent-hover : theme.surface;
-                text-color: program.has-update ? white : theme.text-muted;
-                enabled: program.has-update && !program.ignored;
+                bg: theme.accent;
+                hover-bg: theme.accent-hover;
+                text-color: white;
                 preferred-width: 90px;
                 min-width: 84px;
                 clicked => { root.request-update(program.id); }
             }
+            // 已安装：vbox{上：更新状态按钮，下：卸载按钮}
+            if program.current-version != "": VerticalLayout {
+                spacing: 6px;
+                alignment: center;
 
-            // 启动按钮：蓝色，仅本地已安装时可启动
-            ThemedButton {
+                // 上：更新状态按钮。有更新→Update 可点击；检查失败→红底白字 ERROR；
+                //     否则→Latest 且禁用
+                ThemedButton {
+                    theme: root.theme;
+                    text: program.has-update ? "Update" : program.check-failed ? "ERROR" : "Latest";
+                    bold: true;
+                    bg: program.has-update ? theme.accent : program.check-failed ? theme.danger : theme.surface-alt;
+                    hover-bg: program.has-update ? theme.accent-hover : program.check-failed ? theme.danger : theme.surface;
+                    text-color: program.has-update ? white : program.check-failed ? white : theme.text-muted;
+                    enabled: program.has-update;
+                    alert: program.check-failed;
+                    preferred-width: 90px;
+                    min-width: 84px;
+                    clicked => { root.request-update(program.id); }
+                }
+
+                // 下：卸载按钮（theme.warning 色）
+                ThemedButton {
+                    theme: root.theme;
+                    text: "Uninstall";
+                    bg: theme.warning;
+                    hover-bg: theme.warning;
+                    text-color: #1a1a1a;
+                    preferred-width: 90px;
+                    min-width: 84px;
+                    clicked => { root.uninstall-program(program.id); }
+                }
+            }
+
+            // 启动按钮：已安装时显示，打开软件，始终不禁止
+            if program.current-version != "": ThemedButton {
                 theme: root.theme;
                 text: "Launch";
                 bold: true;
                 bg: theme.accent;
                 hover-bg: theme.accent-hover;
                 text-color: white;
-                enabled: program.current-version != "";
                 preferred-width: 80px;
                 min-width: 76px;
                 clicked => { root.launch-program(program.id); }

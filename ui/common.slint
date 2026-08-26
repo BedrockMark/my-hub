@@ -25,6 +25,8 @@ export struct ProgramInfo {
     current-version: string,
     latest-version: string,
     has-update: bool,
+    // 已安装但最近一次检查失败/尚无检查结果时为 true，UI 据此显示 ERROR 状态按钮
+    check-failed: bool,
     ignored: bool,
     enabled: bool,
     is-self: bool,
@@ -69,6 +71,8 @@ export component ThemedButton inherits Rectangle {
     in property <bool> enabled: true;
     in property <bool> bold: false;
     in property <length> font-size: 12px;
+    // 置为 true 时禁用态也保留 bg/text-color（用于 ERROR 这类警示按钮保持红底白字）
+    in property <bool> alert: false;
     callback clicked;
 
     preferred-width: 96px;
@@ -77,7 +81,7 @@ export component ThemedButton inherits Rectangle {
     border-radius: 6px;
     border-width: 1px;
     border-color: theme.border;
-    background: !root.enabled ? theme.surface : (touch.has-hover ? root.hover-bg : root.bg);
+    background: !root.enabled && !root.alert ? theme.surface : (touch.has-hover ? root.hover-bg : root.bg);
 
     touch := TouchArea {
         enabled: root.enabled;
@@ -87,7 +91,7 @@ export component ThemedButton inherits Rectangle {
 
     Text {
         text: root.text;
-        color: !root.enabled ? theme.text-muted : root.text-color;
+        color: !root.enabled && !root.alert ? theme.text-muted : root.text-color;
         font-size: root.font-size;
         font-weight: root.bold ? 700 : 600;
         overflow: elide;

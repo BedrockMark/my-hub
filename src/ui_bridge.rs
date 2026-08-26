@@ -442,11 +442,18 @@ fn refresh_program_list(
             let installed = state.update_state.installed_versions.get(&p.id);
             let current = installed.map(|v| v.version.clone()).unwrap_or_default();
             let ignored = state.update_state.is_ignored(&p.id);
-            let check = results.and_then(|rs| rs.iter().find(|r| r.program_id == p.id));
+            // 优先用本次检查结果；若未提供（如卸载/跳过后的刷新），回退到内存缓存的检查结果
+            let check = results
+                .and_then(|rs| rs.iter().find(|r| r.program_id == p.id))
+                .or_else(|| state.check_results.get(&p.id));
             let latest = check
                 .and_then(|c| c.latest_version.clone())
                 .unwrap_or_default();
             let has_update = check.map(|c| c.has_update).unwrap_or(false);
+            // 已安装且启用，但拿不到成功的检查结果（尚未检查 / 检查失败）→ UI 显示 ERROR
+            let check_failed = !current.is_empty()
+                && p.enabled
+                && check.map(|c| c.latest_version.is_none()).unwrap_or(true);
             // 跳过已标记忽略版本的更新提示
             let skipped = check
                 .map(|c| {
@@ -467,6 +474,7 @@ fn refresh_program_list(
                 current_version: current.clone().into(),
                 latest_version: latest.clone().into(),
                 has_update: has_update && !skipped,
+                check_failed,
                 ignored,
                 enabled: p.enabled,
                 is_self: p.id == "my-hub",
