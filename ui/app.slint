@@ -143,9 +143,11 @@ component ProgramRowItem inherits Rectangle {
             // 未安装：只显示 Install 按钮
             if program.current-version == "": ThemedButton {
                 theme: root.theme;
-                text: "Install";
+                text: program.check-failed ? "Install" : "ERROR";
                 bold: true;
-                bg: theme.accent;
+                bg: program.check-failed ? theme.accent : theme.warning;
+                enabled: program.check-failed;
+                alert: program.check-failed;
                 hover-bg: theme.accent-hover;
                 text-color: white;
                 preferred-width: 90px;
