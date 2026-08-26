@@ -9,7 +9,7 @@ export { Theme, ProgramInfo, UpdateDialogData }
 export { UpdateDialog }
 export { SettingsPanel }
 
-// 程序列表行组件（固定行高，列表区由 ScrollView 负责滚动）
+// 程序列表行组件
 component ProgramRowItem inherits Rectangle {
     in property <ProgramInfo> program;
     in property <Theme> theme;
@@ -18,13 +18,13 @@ component ProgramRowItem inherits Rectangle {
     callback launch-program(string);
     callback uninstall-program(string);
 
-    height: 56px;
+    height: 20%;
     border-radius: 6px;
     background: theme.surface;
     border-width: 1px;
     border-color: theme.border;
 
-    HorizontalBox {
+    HorizontalLayout {
         padding-left: 14px;
         padding-right: 14px;
         padding-top: 10px;
@@ -32,7 +32,7 @@ component ProgramRowItem inherits Rectangle {
         spacing: 12px;
 
         // 左侧：状态条 + 名称/描述（占据剩余宽度，窄窗口时文本省略）
-        HorizontalBox {
+        HorizontalLayout {
             horizontal-stretch: 1;
             preferred-width: 0px;
             spacing: 10px;
@@ -46,10 +46,12 @@ component ProgramRowItem inherits Rectangle {
                 background: program.has-update ? theme.warning : theme.success;
             }
 
-            VerticalBox {
+            VerticalLayout {
+                vertical-stretch: 0; 
                 spacing: 2px;
+                alignment: center;
 
-                HorizontalBox {
+                HorizontalLayout {
                     spacing: 6px;
 
                     Text {
@@ -89,11 +91,11 @@ component ProgramRowItem inherits Rectangle {
         }
 
         // 右侧：版本信息 + 操作按钮
-        HorizontalBox {
+        HorizontalLayout {
             spacing: 14px;
             alignment: end;
 
-            VerticalBox {
+            VerticalLayout {
                 spacing: 2px;
                 alignment: center;
 
@@ -115,7 +117,7 @@ component ProgramRowItem inherits Rectangle {
                 }
             }
 
-            VerticalBox {
+            VerticalLayout {
                 spacing: 2px;
                 alignment: center;
 
@@ -294,8 +296,6 @@ export component MainWindow inherits Window {
             border-color: theme.border;
 
             ScrollView {
-                background: transparent;
-                border-radius: 8px;
 
                 VerticalLayout {
                     padding: 8px;
