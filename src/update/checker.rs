@@ -94,13 +94,7 @@ fn parse_version(tag: &str) -> Option<String> {
     if Version::parse(trimmed).is_ok() {
         Some(trimmed.to_string())
     } else {
-        // Strip pre-release/build metadata
-        let core = trimmed.split('-').next().unwrap_or(trimmed);
-        if Version::parse(core).is_ok() {
-            Some(core.to_string())
-        } else {
-            info!("Could not parse version from tag '{}'", tag);
-            None
-        }
+        info!("Unuasual version tag '{}' with full tag '{}'", trimmed, tag);
+        Some(trimmed.to_string())
     }
 }

@@ -24,6 +24,15 @@ executable = "my-hub.exe"
 description = "Central hub for the my-family suite"
 enabled = true
 
+[[program]]
+id = "my-resume"
+name = "my-resume"
+owner = "BedrockMark"
+repo = "my-resume"
+executable = "main.pdf"
+description = "My resume!"
+enabled = true
+
 # Add more my-family programs here as you create them.
 # Each program must have a GitHub repo with Releases for update detection.
 

@@ -140,15 +140,15 @@ component ProgramRowItem inherits Rectangle {
             }
 
             // ---- 按钮区 ----
-            // 未安装：只显示 Install 按钮
+            // 未安装：检查成功显示 Install（可点击），检查失败显示 ERROR（禁用）
             if program.current-version == "": ThemedButton {
                 theme: root.theme;
-                text: program.check-failed ? "Install" : "ERROR";
+                text: program.check-failed ? "ERROR" : "Install";
                 bold: true;
-                bg: program.check-failed ? theme.accent : theme.warning;
-                enabled: program.check-failed;
+                bg: program.check-failed ? theme.warning : theme.accent;
+                hover-bg: program.check-failed ? theme.warning : theme.accent-hover;
+                enabled: !program.check-failed;
                 alert: program.check-failed;
-                hover-bg: theme.accent-hover;
                 text-color: white;
                 preferred-width: 90px;
                 min-width: 84px;

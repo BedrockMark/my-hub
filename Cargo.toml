@@ -10,7 +10,10 @@ readme = "README.md"
 
 [dependencies]
 # GUI
-slint = "1.12"
+slint = { version = "1.x", features = [
+    "renderer-femtovg"    # 使用 FemtoVG 渲染（比 Skia 更轻量，兼容性有时更好）
+    # "renderer-software" # 如果你想完全不依赖 GPU，选这个
+] }
 
 # Async runtime + HTTP
 tokio = { version = "1", features = ["full"] }
@@ -53,7 +56,7 @@ required-features = []
 
 # Build dependencies
 [build-dependencies]
-slint-build = "1.12"
+slint-build = "1.x"
 
 [features]
 default = []
