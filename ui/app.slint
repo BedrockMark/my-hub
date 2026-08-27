@@ -226,6 +226,7 @@ export component MainWindow inherits Window {
 
     in-out property <bool> check-on-startup: true;
     in-out property <bool> start-with-windows: false;
+    in-out property <bool> move-to-exe-dir: false;
     in-out property <string> download-dir: "";
     in-out property <string> github-pat: "";
     in-out property <string> theme-mode: "Dark";
@@ -236,7 +237,7 @@ export component MainWindow inherits Window {
     callback check-now();
     callback open-settings();
     callback close-settings();
-    callback save-general(bool, bool, string, string);
+    callback save-general(bool, bool, bool, string, string);
     callback save-theme(string, string, string, string);
     callback request-update(string);
     callback skip-version(string, string);
@@ -369,13 +370,14 @@ export component MainWindow inherits Window {
         theme: root.theme;
         check-on-startup <=> root.check-on-startup;
         start-with-windows <=> root.start-with-windows;
+        move-to-exe-dir <=> root.move-to-exe-dir;
         download-dir <=> root.download-dir;
         github-pat <=> root.github-pat;
         theme-mode <=> root.theme-mode;
         accent-color <=> root.accent-color;
         background-color <=> root.background-color;
         text-color <=> root.text-color;
-        save-general(b1, b2, s1, s2) => { root.save-general(b1, b2, s1, s2); }
+        save-general(b1, b2, b3, s1, s2) => { root.save-general(b1, b2, b3, s1, s2); }
         save-theme(s1, s2, s3, s4) => { root.save-theme(s1, s2, s3, s4); }
         dismissed => { root.close-settings(); }
     }

@@ -25,6 +25,11 @@ pub struct Settings {
     #[serde(default = "default_download_dir")]
     pub download_dir: String,
 
+    /// Whether downloaded updates should be moved next to the my-hub exe
+    /// (into an "installed" subfolder) instead of staying in the download dir.
+    #[serde(default)]
+    pub move_to_exe_dir: bool,
+
     /// Theme preference: "Dark" | "Light" | "System"
     #[serde(default = "default_theme")]
     pub theme: String,
@@ -54,6 +59,7 @@ impl Default for Settings {
             start_with_windows: false,
             github_pat: None,
             download_dir: default_download_dir(),
+            move_to_exe_dir: false,
             theme: default_theme(),
             custom_colors: CustomColors::default(),
         }

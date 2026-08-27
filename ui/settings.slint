@@ -7,6 +7,7 @@ export component SettingsPanel inherits Dialog {
     in property <Theme> theme;
     in-out property <bool> check-on-startup: true;
     in-out property <bool> start-with-windows: false;
+    in-out property <bool> move-to-exe-dir: false;
     in-out property <string> download-dir: "";
     in-out property <string> github-pat: "";
     in-out property <string> theme-mode: "Dark";
@@ -14,7 +15,7 @@ export component SettingsPanel inherits Dialog {
     in-out property <string> background-color: "#1a1a1a";
     in-out property <string> text-color: "#e8e8e8";
 
-    callback save-general(bool, bool, string, string);
+    callback save-general(bool, bool, bool, string, string);
     callback save-theme(string, string, string, string);
     callback dismissed();
 
@@ -56,6 +57,12 @@ export component SettingsPanel inherits Dialog {
             placeholder-text: "%LOCALAPPDATA%\\my-hub\\downloads";
             edited(s) => { root.download-dir = s; }
             preferred-height: 32px;
+        }
+
+        CheckBox {
+            text: "Move downloaded updates next to my-hub exe (into an 'installed' folder)";
+            checked: root.move-to-exe-dir;
+            toggled => { root.move-to-exe-dir = self.checked; }
         }
 
         SectionHeader { theme: root.theme; section-title: "GitHub PAT (optional)"; }
@@ -124,6 +131,7 @@ export component SettingsPanel inherits Dialog {
                     root.save-general(
                         root.check-on-startup,
                         root.start-with-windows,
+                        root.move-to-exe-dir,
                         root.download-dir,
                         root.github-pat
                     );

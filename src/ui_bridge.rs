@@ -32,6 +32,7 @@ pub fn run(state: AppState) -> Result<()> {
         let s = state.lock().unwrap();
         ui.set_check_on_startup(s.settings.check_on_startup);
         ui.set_download_dir(s.settings.download_dir.clone().into());
+        ui.set_move_to_exe_dir(s.settings.move_to_exe_dir);
         ui.set_github_pat(s.settings.github_pat.clone().unwrap_or_default().into());
         ui.set_theme_mode(s.settings.theme.clone().into());
         ui.set_accent_color(s.settings.custom_colors.accent.clone().into());
@@ -83,6 +84,7 @@ pub fn run(state: AppState) -> Result<()> {
             ui.set_check_on_startup(s.settings.check_on_startup);
             ui.set_start_with_windows(s.settings.start_with_windows);
             ui.set_download_dir(s.settings.download_dir.clone().into());
+            ui.set_move_to_exe_dir(s.settings.move_to_exe_dir);
             ui.set_github_pat(s.settings.github_pat.clone().unwrap_or_default().into());
             ui.set_theme_mode(s.settings.theme.clone().into());
             ui.set_accent_color(s.settings.custom_colors.accent.clone().into());
@@ -101,11 +103,12 @@ pub fn run(state: AppState) -> Result<()> {
 
     let state_for_save_gen = Arc::clone(&state);
     let ui_for_save_gen = ui.as_weak();
-    ui.on_save_general(move |check, start_windows, download_dir, github_pat| {
+    ui.on_save_general(move |check, start_windows, move_to_exe_dir, download_dir, github_pat| {
         info!("Save general settings");
         let mut s = state_for_save_gen.lock().unwrap();
         s.settings.check_on_startup = check;
         s.settings.start_with_windows = start_windows;
+        s.settings.move_to_exe_dir = move_to_exe_dir;
         s.settings.download_dir = download_dir.to_string();
         s.settings.github_pat = if github_pat.is_empty() {
             None
@@ -148,7 +151,7 @@ pub fn run(state: AppState) -> Result<()> {
     ui.on_request_update(move |id| {
         info!("Request update for {}", id);
         // 提取 program 条目 + 上次检查缓存的 release 信息（UI 线程内，快速）
-        let (program, release, download_dir) = {
+        let (program, release, download_dir, move_to_exe_dir) = {
             let s = state_for_update.lock().unwrap();
             let p = match s.manifest.find(id.as_str()) {
                 Some(p) => p.clone(),
@@ -158,7 +161,7 @@ pub fn run(state: AppState) -> Result<()> {
                 }
             };
             let rel = s.check_results.get(id.as_str()).and_then(|r| r.release.clone());
-            (p, rel, s.settings.download_dir.clone())
+            (p, rel, s.settings.download_dir.clone(), s.settings.move_to_exe_dir)
         };
         let Some(release) = release else {
             warn!("No cached release info for {} - run a check first", id);
@@ -197,13 +200,26 @@ pub fn run(state: AppState) -> Result<()> {
                             warn!("Self-update failed: {:#}", e);
                         }
                     } else {
-                        // 非自身程序：记录下载位置到状态（MVP：仅记录，不自动替换）
+                        // 非自身程序：按设置决定是否把文件移到 exe 同目录的 installed 子文件夹
+                        let final_path = if move_to_exe_dir {
+                            match move_install_to_exe_dir(&path, &asset_name) {
+                                Ok(p) => p,
+                                Err(e) => {
+                                    // rename 失败：文件仍在下载目录，按实际位置记录
+                                    warn!("Failed to move {} next to exe: {:#}", asset_name, e);
+                                    path
+                                }
+                            }
+                        } else {
+                            path
+                        };
+                        // 记录下载位置到状态（MVP：仅记录，不自动替换）
                         if let Ok(mut s) = state_rc.lock() {
                             s.update_state.downloaded_versions.insert(
                                 program_id.clone(),
                                 DownloadedVersion {
                                     version: tag.clone(),
-                                    path: path.to_string_lossy().to_string(),
+                                    path: final_path.to_string_lossy().to_string(),
                                 },
                             );
                             if let Err(e) = s.save() {
@@ -516,6 +532,21 @@ fn launch_program(entry: &crate::config::manifest::ProgramEntry) {
     if let Err(e) = spawned {
         warn!("Failed to launch {}: {}", exe, e);
     }
+}
+
+/// 把已下载文件移动到 my-hub exe 同目录下的 "installed" 子文件夹，返回最终路径。
+fn move_install_to_exe_dir(downloaded: &std::path::Path, filename: &str) -> anyhow::Result<std::path::PathBuf> {
+    let exe = crate::platform::current_exe_path()?;
+    let exe_dir = exe
+        .parent()
+        .ok_or_else(|| anyhow::anyhow!("Failed to resolve exe parent directory"))?;
+    let target_dir = exe_dir.join("installed");
+    std::fs::create_dir_all(&target_dir)
+        .with_context(|| format!("Failed to create install dir {}", target_dir.display()))?;
+    let dest = target_dir.join(filename);
+    std::fs::rename(downloaded, &dest)
+        .with_context(|| format!("Failed to move {} to {}", downloaded.display(), dest.display()))?;
+    Ok(dest)
 }
 
 fn dark_mode(theme_mode: &str) -> bool {
