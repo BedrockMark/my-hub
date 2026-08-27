@@ -57,6 +57,8 @@ export component SettingsPanel inherits Dialog {
             placeholder-text: "%LOCALAPPDATA%\\my-hub\\downloads";
             edited(s) => { root.download-dir = s; }
             preferred-height: 32px;
+            // 勾选“移动到 exe 目录”时下载位置固定，禁止编辑
+            enabled: !root.move-to-exe-dir;
         }
 
         CheckBox {

@@ -34,6 +34,9 @@ semver = { version = "1", features = ["serde"] }
 # Platform paths
 dirs = "5"
 
+# Open files with the OS default application (native launch)
+opener = "0.7"
+
 # Error handling
 thiserror = "2"
 anyhow = "1"

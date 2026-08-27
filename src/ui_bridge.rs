@@ -71,7 +71,7 @@ pub fn run(state: AppState) -> Result<()> {
         let _ = ui_check.upgrade_in_event_loop(move |ui| {
             ui.set_is_checking(true);
         });
-        spawn_check_handle(&ui_check, &state_check, &runtime_check);
+        spawn_check_handle(&ui_check, &state_check, &runtime_check, true);
     });
 
     let ui_weak = ui.as_weak();
@@ -183,8 +183,20 @@ pub fn run(state: AppState) -> Result<()> {
         let program_id = program.id.clone();
         let tag = release.tag_name.clone();
 
+        // 按设置决定下载目标目录：勾选 move-to-exe-dir 时直接下载到 exe 同目录 installed 子文件夹
+        let target_dir = match resolve_download_target(move_to_exe_dir, &download_dir) {
+            Ok(d) => d,
+            Err(e) => {
+                warn!("Failed to resolve download target for {}: {:#}", id, e);
+                return;
+            }
+        };
+
+        // 供 async 任务内部重检使用（FnMut 闭包环境中无法被 move 捕获）
+        let runtime_handle = runtime_for_update.clone();
+
         runtime_for_update.spawn(async move {
-            let downloader = match Downloader::new(PathBuf::from(&download_dir)) {
+            let downloader = match Downloader::new(target_dir) {
                 Ok(d) => d,
                 Err(e) => {
                     warn!("Failed to init downloader: {:#}", e);
@@ -211,26 +223,13 @@ pub fn run(state: AppState) -> Result<()> {
                             }
                         }
                     } else {
-                        // 非自身程序：按设置决定是否把文件移到 exe 同目录的 installed 子文件夹
-                        let final_path = if move_to_exe_dir {
-                            match move_install_to_exe_dir(&path, &asset_name) {
-                                Ok(p) => p,
-                                Err(e) => {
-                                    // rename 失败：文件仍在下载目录，按实际位置记录
-                                    warn!("Failed to move {} next to exe: {:#}", asset_name, e);
-                                    path
-                                }
-                            }
-                        } else {
-                            path
-                        };
-                        // 记录下载位置到状态（MVP：仅记录，不自动替换）
+                        // 非自身程序：记录下载位置到状态（MVP：仅记录，不自动替换）
                         if let Ok(mut s) = state_rc.lock() {
                             s.update_state.downloaded_versions.insert(
                                 program_id.clone(),
                                 DownloadedVersion {
                                     version: tag.clone(),
-                                    path: final_path.to_string_lossy().to_string(),
+                                    path: path.to_string_lossy().to_string(),
                                 },
                             );
                             // 下载完成即视为已安装该版本：保存版本号供 UI 显示
@@ -240,14 +239,14 @@ pub fn run(state: AppState) -> Result<()> {
                             }
                         }
                     }
+                    // 自动静默重检：确认是否为最新版（不弹更新对话框），完成后刷新列表
+                    spawn_check_handle(&ui_w, &state_rc, &runtime_handle, false);
                     let _ = ui_w.upgrade_in_event_loop(move |ui| {
-                        // 关闭更新对话框并刷新列表（显示下载状态）
+                        // 关闭更新对话框
                         let mut data = ui.get_dialog_data();
                         data.program_id = "".into();
                         ui.set_dialog_data(data);
                         ui.set_is_checking(false);
-                        let st = state_rc.lock().unwrap();
-                        refresh_program_list(&ui, &st, None);
                     });
                 }
                 Err(e) => {
@@ -309,7 +308,7 @@ pub fn run(state: AppState) -> Result<()> {
         info!("Launch program {}", id);
         let s = state_for_launch.lock().unwrap();
         if let Some(program) = s.manifest.find(id.as_str()) {
-            launch_program(program);
+            launch_program(&s, program);
         }
     });
 
@@ -356,14 +355,16 @@ fn spawn_check(ui: &MainWindow, state: &Arc<Mutex<AppState>>, handle: &tokio::ru
     let _ = ui.as_weak().upgrade_in_event_loop(|ui| {
         ui.set_is_checking(true);
     });
-    spawn_check_handle(&ui.as_weak(), state, handle);
+    spawn_check_handle(&ui.as_weak(), state, handle, true);
 }
 
 /// Shared helper that launches the async check task.
+/// `pop_dialog` 为 true 时检查完成后会弹出更新对话框；false 用于下载/更新后的静默重检。
 fn spawn_check_handle(
     ui_weak: &slint::Weak<MainWindow>,
     state: &Arc<Mutex<AppState>>,
     handle: &tokio::runtime::Handle,
+    pop_dialog: bool,
 ) {
     // 提取后台任务需要的数据（均为 Send）
     let (manifest, pat, update_state) = {
@@ -389,14 +390,19 @@ fn spawn_check_handle(
             }
         };
         let _ = ui_w.upgrade_in_event_loop(move |ui| {
-            apply_check_results(&ui, &state_rc, &results);
+            apply_check_results(&ui, &state_rc, &results, pop_dialog);
         });
     });
 }
 
 /// Apply check results on the UI thread: cache results, refresh the list,
-/// pop the update dialog for the first relevant update, reset checking state.
-fn apply_check_results(ui: &MainWindow, state: &Arc<Mutex<AppState>>, results: &[ProgramUpdateInfo]) {
+/// optionally pop the update dialog for the first relevant update, reset checking state.
+fn apply_check_results(
+    ui: &MainWindow,
+    state: &Arc<Mutex<AppState>>,
+    results: &[ProgramUpdateInfo],
+    pop_dialog: bool,
+) {
     // 1. 缓存结果 + 更新 last_check
     {
         let mut s = state.lock().unwrap();
@@ -416,43 +422,45 @@ fn apply_check_results(ui: &MainWindow, state: &Arc<Mutex<AppState>>, results: &
     // 2. 刷新程序列表
     refresh_program_list(ui, &state.lock().unwrap(), Some(results));
 
-    // 3. 弹出第一个有更新的程序对话框（跳过 ignored / 已跳过该版本）
-    let dialog = {
-        let s = state.lock().unwrap();
-        results
-            .iter()
-            .find(|r| {
-                r.has_update
-                    && !r.ignored
-                    && !s.update_state.is_version_skipped(
-                        &r.program_id,
-                        r.latest_version.as_deref().unwrap_or_default(),
-                    )
-            })
-            .and_then(|r| {
-                let p = s.manifest.find(&r.program_id)?;
-                let rel = r.release.as_ref()?;
-                Some((
-                    r.program_id.clone(),
-                    p.name.clone(),
-                    r.current_version.clone().unwrap_or_default(),
-                    r.latest_version.clone().unwrap_or_default(),
-                    rel.published_at.clone(),
-                    rel.body.clone(),
-                    r.ignored,
-                ))
-            })
-    };
-    if let Some((pid, name, cur, latest, published, notes, ignored)) = dialog {
-        let mut data = ui.get_dialog_data();
-        data.program_id = pid.into();
-        data.program_name = name.into();
-        data.current_version = cur.into();
-        data.latest_version = latest.into();
-        data.published_at = published.into();
-        data.release_notes = notes.into();
-        data.ignored = ignored;
-        ui.set_dialog_data(data);
+    // 3. 弹出第一个有更新的程序对话框（跳过 ignored / 已跳过该版本）——仅用户主动检查时
+    if pop_dialog {
+        let dialog = {
+            let s = state.lock().unwrap();
+            results
+                .iter()
+                .find(|r| {
+                    r.has_update
+                        && !r.ignored
+                        && !s.update_state.is_version_skipped(
+                            &r.program_id,
+                            r.latest_version.as_deref().unwrap_or_default(),
+                        )
+                })
+                .and_then(|r| {
+                    let p = s.manifest.find(&r.program_id)?;
+                    let rel = r.release.as_ref()?;
+                    Some((
+                        r.program_id.clone(),
+                        p.name.clone(),
+                        r.current_version.clone().unwrap_or_default(),
+                        r.latest_version.clone().unwrap_or_default(),
+                        rel.published_at.clone(),
+                        rel.body.clone(),
+                        r.ignored,
+                    ))
+                })
+        };
+        if let Some((pid, name, cur, latest, published, notes, ignored)) = dialog {
+            let mut data = ui.get_dialog_data();
+            data.program_id = pid.into();
+            data.program_name = name.into();
+            data.current_version = cur.into();
+            data.latest_version = latest.into();
+            data.published_at = published.into();
+            data.release_notes = notes.into();
+            data.ignored = ignored;
+            ui.set_dialog_data(data);
+        }
     }
 
     ui.set_is_checking(false);
@@ -528,40 +536,46 @@ fn refresh_program_list(
     ui.set_programs(Rc::new(VecModel::from(rows)).into());
 }
 
-/// Launch a program by its manifest executable: first by name (assuming it is
-/// on PATH), then falling back to the directory of the running my-hub exe.
-fn launch_program(entry: &crate::config::manifest::ProgramEntry) {
-    let exe = entry.executable.clone();
-    let spawned = std::process::Command::new(&exe).spawn().or_else(|_| {
-        let dir = std::env::current_exe()
-            .ok()
-            .and_then(|p| p.parent().map(|d| d.to_path_buf()));
-        match dir {
-            Some(d) => std::process::Command::new(d.join(&exe)).spawn(),
-            None => Err(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "executable not found",
-            )),
-        }
-    });
-    if let Err(e) = spawned {
-        warn!("Failed to launch {}: {}", exe, e);
+/// Launch a program via the OS default application (native launch):
+/// resolve the program file location, then open it with opener.
+fn launch_program(state: &AppState, entry: &crate::config::manifest::ProgramEntry) {
+    let path = resolve_program_path(state, entry);
+    if let Err(e) = opener::open(&path) {
+        warn!("Failed to launch {} ({}): {:#}", entry.id, path.display(), e);
     }
 }
 
-/// 把已下载文件移动到 my-hub exe 同目录下的 "installed" 子文件夹，返回最终路径。
-fn move_install_to_exe_dir(downloaded: &std::path::Path, filename: &str) -> anyhow::Result<std::path::PathBuf> {
-    let exe = crate::platform::current_exe_path()?;
-    let exe_dir = exe
-        .parent()
-        .ok_or_else(|| anyhow::anyhow!("Failed to resolve exe parent directory"))?;
-    let target_dir = exe_dir.join("installed");
-    std::fs::create_dir_all(&target_dir)
-        .with_context(|| format!("Failed to create install dir {}", target_dir.display()))?;
-    let dest = target_dir.join(filename);
-    std::fs::rename(downloaded, &dest)
-        .with_context(|| format!("Failed to move {} to {}", downloaded.display(), dest.display()))?;
-    Ok(dest)
+/// 定位程序可执行文件路径（launch directory 下的文件）：优先已下载记录（含最终位置），
+/// 否则按设置推断所在目录（installed 子文件夹或下载目录）。
+fn resolve_program_path(state: &AppState, entry: &crate::config::manifest::ProgramEntry) -> PathBuf {
+    if let Some(d) = state.update_state.downloaded_versions.get(&entry.id) {
+        return PathBuf::from(&d.path);
+    }
+    if state.settings.move_to_exe_dir {
+        if let Ok(exe) = crate::platform::current_exe_path() {
+            if let Some(dir) = exe.parent() {
+                return dir.join("installed").join(&entry.executable);
+            }
+        }
+    }
+    PathBuf::from(&state.settings.download_dir).join(&entry.executable)
+}
+
+/// 解析下载目标目录：move_to_exe_dir 时直接返回 exe 同目录下的 "installed" 子文件夹（自动创建），
+/// 否则返回下载目录。
+fn resolve_download_target(move_to_exe_dir: bool, download_dir: &str) -> anyhow::Result<PathBuf> {
+    if move_to_exe_dir {
+        let exe = crate::platform::current_exe_path()?;
+        let exe_dir = exe
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("Failed to resolve exe parent directory"))?;
+        let dir = exe_dir.join("installed");
+        std::fs::create_dir_all(&dir)
+            .with_context(|| format!("Failed to create install dir {}", dir.display()))?;
+        Ok(dir)
+    } else {
+        Ok(PathBuf::from(download_dir))
+    }
 }
 
 /// 把某程序的最新检查版本记为已安装版本（供 UI 显示 current 版本）。
