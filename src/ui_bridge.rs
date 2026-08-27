@@ -10,7 +10,7 @@ use tracing::{info, warn};
 use crate::app_state::AppState;
 use crate::config::theme::ResolvedTheme;
 use crate::github::GitHubClient;
-use crate::update::state::DownloadedVersion;
+use crate::update::state::{DownloadedVersion, InstalledVersion};
 use crate::update::{Downloader, ProgramUpdateInfo, UpdateChecker};
 
 slint::include_modules!();
@@ -196,8 +196,19 @@ pub fn run(state: AppState) -> Result<()> {
                     info!("Downloaded {} to {}", asset_name, path.display());
                     if is_self {
                         // 自更新：stage 新 exe，延迟替换并重启
-                        if let Err(e) = apply_self_update(&path) {
-                            warn!("Self-update failed: {:#}", e);
+                        match apply_self_update(&path) {
+                            Ok(()) => {
+                                // 记录新版本，重启后 UI 显示 current 版本
+                                if let Ok(mut s) = state_rc.lock() {
+                                    record_installed_version(&mut s, &program_id, &tag);
+                                    if let Err(e) = s.save() {
+                                        warn!("Failed to persist version after self-update: {:#}", e);
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                warn!("Self-update failed: {:#}", e);
+                            }
                         }
                     } else {
                         // 非自身程序：按设置决定是否把文件移到 exe 同目录的 installed 子文件夹
@@ -222,6 +233,8 @@ pub fn run(state: AppState) -> Result<()> {
                                     path: final_path.to_string_lossy().to_string(),
                                 },
                             );
+                            // 下载完成即视为已安装该版本：保存版本号供 UI 显示
+                            record_installed_version(&mut s, &program_id, &tag);
                             if let Err(e) = s.save() {
                                 warn!("Failed to persist download record: {:#}", e);
                             }
@@ -306,7 +319,9 @@ pub fn run(state: AppState) -> Result<()> {
         info!("Uninstall program {}", id);
         {
             let mut s = state_for_uninstall.lock().unwrap();
-            if s.update_state.installed_versions.remove(id.as_str()).is_some() {
+            let removed_installed = s.update_state.installed_versions.remove(id.as_str()).is_some();
+            let removed_downloaded = s.update_state.downloaded_versions.remove(id.as_str()).is_some();
+            if removed_installed || removed_downloaded {
                 if let Err(e) = s.save() {
                     warn!("Failed to persist state after uninstall: {:#}", e);
                 }
@@ -547,6 +562,24 @@ fn move_install_to_exe_dir(downloaded: &std::path::Path, filename: &str) -> anyh
     std::fs::rename(downloaded, &dest)
         .with_context(|| format!("Failed to move {} to {}", downloaded.display(), dest.display()))?;
     Ok(dest)
+}
+
+/// 把某程序的最新检查版本记为已安装版本（供 UI 显示 current 版本）。
+/// 优先使用检查结果中的 latest_version（无 'v' 前缀，保证 semver 比较一致），
+/// 拿不到时回退到 tag 本身。
+fn record_installed_version(s: &mut AppState, program_id: &str, fallback_tag: &str) {
+    let version = s
+        .check_results
+        .get(program_id)
+        .and_then(|r| r.latest_version.clone())
+        .unwrap_or_else(|| fallback_tag.trim_start_matches('v').to_string());
+    s.update_state.installed_versions.insert(
+        program_id.to_string(),
+        InstalledVersion {
+            version,
+            installed_at: chrono::Utc::now().to_rfc3339(),
+        },
+    );
 }
 
 fn dark_mode(theme_mode: &str) -> bool {
