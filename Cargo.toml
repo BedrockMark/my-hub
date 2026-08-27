@@ -10,9 +10,12 @@ readme = "README.md"
 
 [dependencies]
 # GUI
-slint = { version = "1.x", features = [
-    "renderer-femtovg"    # 使用 FemtoVG 渲染（比 Skia 更轻量，兼容性有时更好）
-    # "renderer-software" # 如果你想完全不依赖 GPU，选这个
+slint = { version = "1.x", default-features = false, features = [
+    "std", 
+    "compat-1-2",
+    "backend-winit",      # 使用 winit 管理窗口
+    # "renderer-femtovg"    # 使用 FemtoVG 渲染（比 Skia 更轻量，兼容性有时更好）
+    "renderer-software" # 如果你想完全不依赖 GPU，选这个
 ] }
 
 # Async runtime + HTTP
