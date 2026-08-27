@@ -18,7 +18,7 @@ component ProgramRowItem inherits Rectangle {
     callback launch-program(string);
     callback uninstall-program(string);
 
-    height: 20%;
+    preferred-height: 65px;
     border-radius: 6px;
     background: theme.surface;
     border-width: 1px;
@@ -326,6 +326,7 @@ export component MainWindow inherits Window {
                     spacing: 6px;
 
                     for p in root.programs: ProgramRowItem {
+                        height: root.height * 12%;
                         program: p;
                         theme: root.theme;
                         request-update(id) => { root.request-update(id); }

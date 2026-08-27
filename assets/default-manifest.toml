@@ -32,24 +32,3 @@ repo = "my-resume"
 executable = "main.pdf"
 description = "My resume!"
 enabled = true
-
-# Add more my-family programs here as you create them.
-# Each program must have a GitHub repo with Releases for update detection.
-
-# [[program]]
-# id = "my-clipboard"
-# name = "my-clipboard"
-# owner = "yourusername"
-# repo = "my-clipboard"
-# executable = "my-clipboard.exe"
-# description = "Cross-device clipboard sync"
-# enabled = true
-
-# [[program]]
-# id = "my-notes"
-# name = "my-notes"
-# owner = "yourusername"
-# repo = "my-notes"
-# executable = "my-notes.exe"
-# description = "Markdown note-taking app"
-# enabled = true
