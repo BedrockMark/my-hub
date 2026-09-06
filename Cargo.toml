@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "A central hub for managing the my-family suite of applications"
 authors = ["my-hub contributors"]
-repository = "https://github.com/yourusername/my-hub"
+repository = "https://github.com/BedrockMark/my-hub"
 license = "GPL-3.0-or-later"
 readme = "README.md"
 

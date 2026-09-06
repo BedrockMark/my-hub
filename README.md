@@ -32,13 +32,16 @@ This repository is the central hub for the whole `my-*` family. Each member is a
 | Project | Description |
 |---------|-------------|
 | [my-hub](https://github.com/BedrockMark/my-hub) | **This project** — central download / update / launch centre for the family |
-| [my-resume](https://github.com/BedrockMark/my-resume) | My resume! |
+| [my-tomato](https://github.com/BedrockMark/my-tomato) | **Tomato Clock** — Extremely lightweighted |
+| [my-recipe](https://github.com/BedrockMark/my-recipe) | **Recipe Recorder & Planner** — manage recipe, weekly-preparation, and monthly neutrition analysis |
+| [my-scheduler](https://github.com/BedrockMark/my-scheduler) | **Habit Manager** — habit formation reminder, features any frequence by using cron expression |
+| ~~[my-resume](https://github.com/BedrockMark/my-resume)~~ | (Non-public until privacy checked with career advisor) ~~My resume!~~ |
 
-> **Add a new family member** — insert a row below, replacing the placeholders, and keep it in sync with the family's shared manifest (`assets/default-manifest.toml`):
+<!-- > **Add a new family member** — insert a row below, replacing the placeholders, and keep it in sync with the family's shared manifest (`assets/default-manifest.toml`):
 
 ```markdown
 | [my-<project-name>](https://github.com/<your-username>/my-<project-name>) | <one-line description> |
-```
+``` -->
 
 ---
 
@@ -207,7 +210,7 @@ This project is part of a personal family of tools, but contributions are welcom
 <!-- ⚠️ IMAGE SETUP INSTRUCTIONS ⚠️ -->
 <!-- After adding images to the `screenshots/` folder, delete this entire comment block AND the "⚠️ IMAGE SETUP REQUIRED" comment at the very top of this README. -->
 
-## 📸 Screenshot Reference Table
+<!-- ## 📸 Screenshot Reference Table
 
 > Create a `screenshots/` folder in the project root with the images listed below.
 
@@ -215,4 +218,4 @@ This project is part of a personal family of tools, but contributions are welcom
 |-----------|-------------|---------------------|
 | `screenshots/main-window.png` | Main program list | Show the main window with the my-family program rows (e.g. my-hub, my-resume), each showing its installed version plus its action buttons; at least one row should display an "Update" state. Resolution: 1920×1080. |
 | `screenshots/update-dialog.png` | Update available dialog | Show the dialog for a single program: old → new version, release date, and the four actions (Update / Skip This Version / Ignore This Program / Close). Resolution: 1920×1080. |
-| `screenshots/settings-theme.png` | Settings panel, theme tab | Show the Settings panel with the theme section visible: dark/light/system choice plus the three custom colour pickers (accent, background, text). Resolution: 1920×1080. |
+| `screenshots/settings-theme.png` | Settings panel, theme tab | Show the Settings panel with the theme section visible: dark/light/system choice plus the three custom colour pickers (accent, background, text). Resolution: 1920×1080. | -->

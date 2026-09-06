@@ -18,10 +18,37 @@
 [[program]]
 id = "my-hub"
 name = "my-hub"
-owner = "yourusername"
+owner = "BedrockMark"
 repo = "my-hub"
 executable = "my-hub.exe"
 description = "Central hub for the my-family suite"
+enabled = true
+
+[[program]]
+id = "my-tomato"
+name = "my-tomato"
+owner = "BedrockMark"
+repo = "my-hub"
+executable = "my-tomato.exe"
+description = "Lightweighted Tomato Clock, period."
+enabled = true
+
+[[program]]
+id = "my-recipe"
+name = "my-recipe"
+owner = "BedrockMark"
+repo = "my-recipe"
+executable = "my-recipe.exe"
+description = "Recipe manager, more than recording, but also assist weekly preparation and monthly neutrition analysis"
+enabled = true
+
+[[program]]
+id = "my-scheduler"
+name = "my-scheduler"
+owner = "BedrockMark"
+repo = "my-scheduler"
+executable = "my-scheduler.exe"
+description = "Habit formation reminder, features any frequence reminder by using cron expression"
 enabled = true
 
 [[program]]
@@ -31,4 +58,4 @@ owner = "BedrockMark"
 repo = "my-resume"
 executable = "main.pdf"
 description = "My resume!"
-enabled = true
+enabled = false
