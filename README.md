@@ -9,6 +9,14 @@
 ![Language: Rust](https://img.shields.io/badge/Language-Rust-orange.svg)
 ![Platform: Windows 11](https://img.shields.io/badge/Platform-Windows%2011-0078d6.svg)
 
+
+## What is it?
+
+As harness agents become such a strong assistance for human, allowing us to construct complex demo or even fine-end product with a lot less works, using it seems to be an essential skill that I can't learn from the university courses. It turns out, there's no better ways to learn it - other than get my hands dirty and burn some tokens myself!
+
+That's why I designed and built the whole series, using OpenCode (Oh-My-Openagent) + DeepSeek API + home-made my-skills agnet skills, to demonstrate my learning process and ability to utilize and refine agent workflows. (Author's note: while this whole section is written by hand, most of the other READMEs were AI-generated but manually reviewed.)
+
+> Why is this combination? <br> - Opencode provide a harness framwork, allows me to see the needed components for an agent to work, before it expand to an overwelming complexity like Claude of Codex. <br> - DeepSeek is known for high cache-hit and low price, it allows me to burn tokens with no concern of budgets. In fact, across all projects, I burnt over 60B tokens, but it cost me less than $10! (Cache-hit rate around 97%) <br> - Building high quality skills itself is an important skill itself, while skill market is fulfilled with random, unknown AI-generated products...
 ---
 
 ## 🎯 What Problem Does This Solve?
@@ -35,6 +43,7 @@ This repository is the central hub for the whole `my-*` family. Each member is a
 | [my-tomato](https://github.com/BedrockMark/my-tomato) | **Tomato Clock** — Extremely lightweighted |
 | [my-recipe](https://github.com/BedrockMark/my-recipe) | **Recipe Recorder & Planner** — manage recipe, weekly-preparation, and monthly neutrition analysis |
 | [my-scheduler](https://github.com/BedrockMark/my-scheduler) | **Habit Manager** — habit formation reminder, features any frequence by using cron expression |
+| [my-skills](https://github.com/BedrockMark/my-skills) | **Home-made skill centre** —  |
 | ~~[my-resume](https://github.com/BedrockMark/my-resume)~~ | (Non-public until privacy checked with career advisor) ~~My resume!~~ |
 
 <!-- > **Add a new family member** — insert a row below, replacing the placeholders, and keep it in sync with the family's shared manifest (`assets/default-manifest.toml`):

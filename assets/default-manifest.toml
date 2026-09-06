@@ -52,6 +52,15 @@ description = "Habit formation reminder, features any frequence reminder by usin
 enabled = true
 
 [[program]]
+id = "my-skills"
+name = "my-skills"
+owner = "BedrockMark"
+repo = "my-skills"
+executable = "README.md"
+description = "An agent skill library, contain my day-to-day used agent skills, that are made by myself"
+enabled = true
+
+[[program]]
 id = "my-resume"
 name = "my-resume"
 owner = "BedrockMark"
