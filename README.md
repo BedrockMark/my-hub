@@ -10,7 +10,7 @@
 ![Platform: Windows 11](https://img.shields.io/badge/Platform-Windows%2011-0078d6.svg)
 
 
-## What is it?
+## What is this series for?
 
 As harness agents become such a strong assistance for human, allowing us to construct complex demo or even fine-end product with a lot less works, using it seems to be an essential skill that I can't learn from the university courses. It turns out, there's no better ways to learn it - other than get my hands dirty and burn some tokens myself!
 
