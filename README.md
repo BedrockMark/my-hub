@@ -110,7 +110,7 @@ This repository is the central hub for the whole `my-*` family. Each member is a
 | Runtime binaries | 2 (`my-hub`, `build-installer`) |
 | Config / state files (plain text) | 3 (`settings.toml`, `manifest.toml`, `state.json`) |
 | Programs in default manifest | 2 (including my-hub itself) |
-| Distribution format | Per-user MSI (no admin rights) |
+| Distribution format | Per-machine MSI via cargo-packager (WiX) |
 | Telemetry | 0 — fully offline, no usage reporting |
 
 ---
@@ -130,9 +130,9 @@ cargo run
 # 3. Release build
 cargo build --release          # -> target\release\my-hub.exe
 
-# 4. Build the per-user MSI installer
-cargo run --release --bin build-installer
-#    -> target\wix\my-hub-<version>-x86_64.msi
+# 4. Build the MSI installer (first run downloads & caches WiX Toolset)
+cargo run --release --bin build-installer --features installer
+#    -> target\wix\my-hub_<version>_x64_en-US.msi
 ```
 
 Install the MSI (or just run `my-hub.exe`) and the main window lists every program in the embedded manifest. Updates are only ever applied when you click **Update**.
@@ -171,7 +171,7 @@ enabled     = true               # optional, default true
 | serde + toml + serde_json | Config & state | Native, human-readable formats for every persisted file |
 | semver | Version comparison | Exact, spec-compliant release-tag comparison for update detection |
 | winreg + dirs + opener | Windows integration | Auto-start registry key, standard data paths, native launch of installed programs |
-| rust-msi (`build-installer`) | MSI packaging | Generates a genuine per-user Windows Installer package (Start Menu entry, uninstall info) from pure Rust |
+| cargo-packager (`build-installer`) | MSI packaging | Packages the release binary into a genuine Windows Installer package (Start Menu shortcut, uninstall info) using the WiX Toolset |
 | tracing | Logging | Structured, filterable logs without heavy dependencies |
 
 ---

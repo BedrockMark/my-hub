@@ -51,14 +51,14 @@ chrono = { version = "0.4", features = ["serde"] }
 # Windows-specific
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
-msi = "0.10"
-uuid = { version = "1", features = ["v4"] }
+# MSI 打包引擎（由 installer feature 启用，cargo-packager 库 API）
+cargo-packager = { version = "0.11", optional = true, default-features = false, features = ["rustls-tls"] }
 
 # MSI installer builder
 [[bin]]
 name = "build-installer"
 path = "src/bin/build_installer.rs"
-required-features = []
+required-features = ["installer"]
 
 # Build dependencies
 [build-dependencies]
@@ -66,6 +66,8 @@ slint-build = "1.x"
 
 [features]
 default = []
+# 打包 MSI 安装器（仅 build-installer 使用；不启用时不影响日常构建）
+installer = ["dep:cargo-packager"]
 # Future: self-update could be a feature flag
 
 # Optimize release builds
